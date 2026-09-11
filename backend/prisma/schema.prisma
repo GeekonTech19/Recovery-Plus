@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  timezone String @default("UTC")
+  locale   String @default("en")
+  language String @default("en")
+
+  communityUsername String? @unique
+
+  achievements Achievement[]
+  checkIns     DailyCheckIn[]
+  goals        Goal[]
+  posts        CommunityPost[]
+  reactions    CommunityReaction[]
+}
+
+model DailyCheckIn {
+  id           String   @id @default(uuid())
+  userId       String
+  date         DateTime @default(now())
+  recoveryDate String
+
+  mood   String
+  stress Int
+
+  alcoholFree Boolean
+  noSmoking   Boolean
+  noDrugs     Boolean
+
+  exercised  Boolean
+  drankWater Boolean
+  sleptWell  Boolean
+
+  journal   String?
+  challenge String?
+  wins      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recoveryDate])
+  @@index([userId])
+  @@index([date])
+  @@index([recoveryDate])
+}
+
+model Goal {
+  id           String    @id @default(uuid())
+  userId       String
+  title        String
+  description  String    @default("")
+  category     String    @default("General")
+  target       Int       @default(1)
+  progress     Int       @default(0)
+  dueDate      DateTime?
+  trackingType String?
+  completed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([trackingType])
+}
+
+model Achievement {
+  id       String   @id @default(uuid())
+  userId   String
+  badge    String
+  earnedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  communityPost CommunityPost?
+
+  @@unique([userId, badge])
+  @@index([userId])
+}
+
+model CommunityUserNumber {
+  id Int @id @default(autoincrement())
+}
+
+model CommunityPost {
+  id String @id @default(uuid())
+
+  userId String
+
+  type String @default("user")
+
+  content String
+
+  achievementId String? @unique
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  achievement Achievement? @relation(fields: [achievementId], references: [id], onDelete: SetNull)
+
+  reactions CommunityReaction[]
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([type])
+}
+
+model CommunityReaction {
+  id String @id @default(uuid())
+
+  postId String
+  userId String
+  emoji String
+
+  createdAt DateTime @default(now())
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId, emoji])
+  @@index([postId])
+  @@index([userId])
+}

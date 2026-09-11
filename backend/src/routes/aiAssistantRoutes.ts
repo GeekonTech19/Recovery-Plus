@@ -1,0 +1,1 @@
+import {Router} from "express"; import {authenticate} from "../middleware/authMiddleware"; import {aiAssistantController} from "../controllers/aiAssistantController"; import {aiRateLimit} from "../middleware/aiRateLimit"; const router=Router(); router.post("/",authenticate,aiRateLimit,aiAssistantController); export default router;

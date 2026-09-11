@@ -1,0 +1,4 @@
+type ScoreInput={stress:number;mood:string;alcoholFree:boolean;noSmoking:boolean;noDrugs:boolean;exercised:boolean;drankWater:boolean;sleptWell:boolean};
+const positiveMoods=new Set(["great","good","calm","happy","hopeful","motivated","positive","okay","ok"]);
+export function calculateCheckInScore(c:ScoreInput){const recovery=(Number(c.alcoholFree)+Number(c.noSmoking)+Number(c.noDrugs))/3*50;const habits=(Number(c.exercised)+Number(c.drankWater)+Number(c.sleptWell))/3*25;const stress=Math.max(0,1-Math.max(0,Math.min(10,c.stress))/10)*15;const mood=positiveMoods.has(c.mood.trim().toLowerCase())?10:5;return Math.round(Math.max(0,Math.min(100,recovery+habits+stress+mood)));}
+export function calculateRecoveryScore(checkIns:ScoreInput[]){if(!checkIns.length)return 0;return Math.round(checkIns.reduce((sum,c)=>sum+calculateCheckInScore(c),0)/checkIns.length);}

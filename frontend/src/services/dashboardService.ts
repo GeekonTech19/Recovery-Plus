@@ -1,0 +1,3 @@
+import { apiFetch, authHeaders } from "./api";
+export type DashboardSummary={user:{id:string;firstName:string;lastName:string;email:string;timezone:string;locale:string;language:string;createdAt:string};recovery:{currentStreak:number;totalCheckIns:number;recoveryDays:number;recoveryScore:number;averageStress:number;successRate:number};goals:{total:number;completed:number;remaining:number};achievements:{total:number;items:{id:string;badge:string;earnedAt:string}[]};recentActivity:{id:string;date:string;mood:string;stress:number;journal:string|null;wins:string|null}[]};
+export async function getDashboardSummary(){return apiFetch<DashboardSummary>("/dashboard",{headers:authHeaders()});}
