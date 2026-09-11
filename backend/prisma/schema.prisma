@@ -130,7 +130,7 @@ model CommunityReaction {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([postId, userId, emoji])
+  @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
 }
