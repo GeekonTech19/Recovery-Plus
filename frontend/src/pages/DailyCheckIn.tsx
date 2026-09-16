@@ -36,9 +36,7 @@ const DailyCheckIn = () => {
 
   const handleSave = async () => {
     if (!mood) {
-      alert(
-        "Please select your mood before saving today's check-in."
-      );
+      alert("Please select your mood before saving today's check-in.");
       return;
     }
 
@@ -49,10 +47,6 @@ const DailyCheckIn = () => {
     setSaving(true);
 
     try {
-      /*
-       * This object is used by the recovery engine
-       * to calculate the user's recovery score.
-       */
       const checkInForScore = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
@@ -72,58 +66,25 @@ const DailyCheckIn = () => {
         wins,
       };
 
-      const result =
-        calculateCheckInScore(
-          checkInForScore
-        );
+      const result = calculateCheckInScore(checkInForScore);
 
-      /*
-       * Send the check-in to the Recovery+ backend.
-       *
-       * The backend creates the ID and date.
-       *
-       * The backend also automatically:
-       * - saves the DailyCheckIn
-       * - updates applicable goals
-       * - evaluates achievements
-       * - records completed goals
-       */
-      const savedCheckIn =
-        await saveCheckIn({
-          alcoholFree,
-          noSmoking,
-          noDrugs,
-          exercised,
-          drankWater,
-          sleptWell,
-          mood,
-          stress,
-          journal,
-          challenge,
-          wins,
-        });
+      const savedCheckIn = await saveCheckIn({
+        alcoholFree,
+        noSmoking,
+        noDrugs,
+        exercised,
+        drankWater,
+        sleptWell,
+        mood,
+        stress,
+        journal,
+        challenge,
+        wins,
+      });
 
-      console.log(
-        "Check-in saved to backend:",
-        savedCheckIn
-      );
+      console.log("Check-in saved to backend:", savedCheckIn);
+      console.log("Recovery score:", result);
 
-      console.log(
-        "Recovery score:",
-        result
-      );
-
-      /*
-       * The check-in has been successfully saved.
-       *
-       * The backend has already processed the
-       * associated goal automation before this
-       * request completes.
-       *
-       * We therefore take the user directly to
-       * the Goals page so they can see the updated
-       * progress.
-       */
       alert(
         `✅ Check-in Saved!
 
@@ -140,268 +101,359 @@ Taking you to your Goals...`
 
       navigate("/goals");
     } catch (error) {
-      console.error(
-        "Failed to save check-in:",
-        error
-      );
+      console.error("Failed to save check-in:", error);
 
       const message =
         error instanceof Error
           ? error.message
           : "Unable to save your check-in.";
 
-      alert(
-        `❌ Check-in was not saved.\n\n${message}`
-      );
+      alert(`❌ Check-in was not saved.\n\n${message}`);
     } finally {
       setSaving(false);
     }
   };
 
+  const recoveryItems = [
+    {
+      emoji: "🍺",
+      title: "Alcohol Free",
+      description: "Stayed alcohol-free",
+      checked: alcoholFree,
+      setChecked: setAlcoholFree,
+    },
+    {
+      emoji: "🚭",
+      title: "No Smoking",
+      description: "Stayed smoke-free",
+      checked: noSmoking,
+      setChecked: setNoSmoking,
+    },
+    {
+      emoji: "💊",
+      title: "No Drugs",
+      description: "Stayed drug-free",
+      checked: noDrugs,
+      setChecked: setNoDrugs,
+    },
+  ];
+
+  const healthyHabitItems = [
+    {
+      emoji: "🏃",
+      title: "Exercise",
+      description: "I moved my body today",
+      checked: exercised,
+      setChecked: setExercised,
+    },
+    {
+      emoji: "💧",
+      title: "Water",
+      description: "I stayed hydrated",
+      checked: drankWater,
+      setChecked: setDrankWater,
+    },
+    {
+      emoji: "😴",
+      title: "Good Sleep",
+      description: "I slept well",
+      checked: sleptWell,
+      setChecked: setSleptWell,
+    },
+  ];
+
   return (
     <AppLayout title="Daily Check-in">
-      <div className="container py-4">
-        <h2 className="fw-bold">
-          Daily Check-in
-        </h2>
+      <div className="mx-auto max-w-4xl px-3 py-4 sm:px-4 lg:py-6">
+        {/* Header */}
+        <div className="mb-6 rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 p-5 text-white shadow-lg sm:p-7">
+          <p className="mb-2 text-sm font-medium text-blue-200">
+            {today}
+          </p>
 
-        <p className="text-muted">
-          {today}
-        </p>
+          <h1 className="text-2xl font-bold sm:text-3xl">
+            Daily Check-in
+          </h1>
 
-        <hr />
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-blue-100 sm:text-base">
+            Take a moment to check in with yourself. Every honest check-in is
+            another step forward.
+          </p>
+        </div>
 
         {/* Recovery */}
-        <h4 className="mt-4">
-          Recovery
-        </h4>
+        <section className="mb-6 rounded-3xl bg-white p-4 shadow-md sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-blue-900">
+              🛡️ Recovery
+            </h2>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={alcoholFree}
-            onChange={(e) =>
-              setAlcoholFree(
-                e.target.checked
-              )
-            }
-          />
+            <p className="mt-1 text-sm text-slate-500">
+              Celebrate the choices that support your recovery.
+            </p>
+          </div>
 
-          <label className="form-check-label">
-            Stayed alcohol-free
-          </label>
-        </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {recoveryItems.map((item) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => item.setChecked(!item.checked)}
+                className={`relative flex min-h-[105px] items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
+                  item.checked
+                    ? "border-emerald-400 bg-emerald-50 shadow-md"
+                    : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50"
+                }`}
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
+                  {item.emoji}
+                </span>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={noSmoking}
-            onChange={(e) =>
-              setNoSmoking(
-                e.target.checked
-              )
-            }
-          />
+                <span>
+                  <span className="block font-bold text-slate-800">
+                    {item.title}
+                  </span>
 
-          <label className="form-check-label">
-            No smoking
-          </label>
-        </div>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    {item.description}
+                  </span>
+                </span>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={noDrugs}
-            onChange={(e) =>
-              setNoDrugs(
-                e.target.checked
-              )
-            }
-          />
-
-          <label className="form-check-label">
-            No drugs
-          </label>
-        </div>
+                <span
+                  className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
+                    item.checked
+                      ? "bg-emerald-500 text-white"
+                      : "border border-slate-300 bg-white text-transparent"
+                  }`}
+                >
+                  ✓
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Healthy Habits */}
-        <h4 className="mt-4">
-          Healthy Habits
-        </h4>
+        <section className="mb-6 rounded-3xl bg-white p-4 shadow-md sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-blue-900">
+              🌱 Healthy Habits
+            </h2>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={exercised}
-            onChange={(e) =>
-              setExercised(
-                e.target.checked
-              )
-            }
-          />
+            <p className="mt-1 text-sm text-slate-500">
+              Small healthy choices add up to meaningful progress.
+            </p>
+          </div>
 
-          <label className="form-check-label">
-            Exercised today
-          </label>
-        </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {healthyHabitItems.map((item) => (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => item.setChecked(!item.checked)}
+                className={`relative flex min-h-[105px] items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
+                  item.checked
+                    ? "border-emerald-400 bg-emerald-50 shadow-md"
+                    : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50"
+                }`}
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
+                  {item.emoji}
+                </span>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={drankWater}
-            onChange={(e) =>
-              setDrankWater(
-                e.target.checked
-              )
-            }
-          />
+                <span>
+                  <span className="block font-bold text-slate-800">
+                    {item.title}
+                  </span>
 
-          <label className="form-check-label">
-            Drank enough water
-          </label>
-        </div>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">
+                    {item.description}
+                  </span>
+                </span>
 
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            checked={sleptWell}
-            onChange={(e) =>
-              setSleptWell(
-                e.target.checked
-              )
-            }
-          />
+                <span
+                  className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${
+                    item.checked
+                      ? "bg-emerald-500 text-white"
+                      : "border border-slate-300 bg-white text-transparent"
+                  }`}
+                >
+                  ✓
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-          <label className="form-check-label">
-            Slept well
-          </label>
-        </div>
+        {/* Wellness */}
+        <section className="mb-6 rounded-3xl bg-white p-4 shadow-md sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-blue-900">
+              💙 How Are You Feeling?
+            </h2>
 
-        {/* Mood */}
-        <h4 className="mt-4">
-          Mood
-        </h4>
+            <p className="mt-1 text-sm text-slate-500">
+              Check in with your mood and stress level today.
+            </p>
+          </div>
 
-        <select
-          className="form-select"
-          value={mood}
-          onChange={(e) =>
-            setMood(e.target.value)
-          }
-        >
-          <option value="">
-            Select Mood
-          </option>
+          {/* Mood */}
+          <div className="mb-6">
+            <label className="mb-3 block text-sm font-bold text-slate-700">
+              Your mood
+            </label>
 
-          <option>
-            Excellent 😄
-          </option>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {[
+                { value: "Great", emoji: "😄" },
+                { value: "Good", emoji: "🙂" },
+                { value: "Okay", emoji: "😐" },
+                { value: "Low", emoji: "😔" },
+                { value: "Difficult", emoji: "😣" },
+              ].map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() => setMood(item.value)}
+                  className={`rounded-2xl border-2 px-3 py-3 transition-all duration-200 ${
+                    mood === item.value
+                      ? "border-blue-500 bg-blue-50 shadow-md"
+                      : "border-slate-200 bg-white hover:border-blue-300"
+                  }`}
+                >
+                  <span className="block text-2xl">{item.emoji}</span>
 
-          <option>
-            Good 😊
-          </option>
+                  <span className="mt-1 block text-xs font-semibold text-slate-700">
+                    {item.value}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-          <option>
-            Okay 😐
-          </option>
+          {/* Compact Stress / Recovery Level */}
+          <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <label
+                htmlFor="stress"
+                className="text-sm font-bold text-slate-700"
+              >
+                Recovery level
+              </label>
 
-          <option>
-            Low 😔
-          </option>
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-bold text-blue-800">
+                {stress}/10
+              </span>
+            </div>
 
-          <option>
-            Very Low 😢
-          </option>
-        </select>
+            <input
+              id="stress"
+              type="range"
+              min="0"
+              max="10"
+              value={stress}
+              onChange={(e) => setStress(Number(e.target.value))}
+              className="h-2 w-full cursor-pointer accent-blue-700"
+            />
 
-        {/* Stress */}
-        <h4 className="mt-4">
-          Stress Level
-        </h4>
+            <div className="mt-2 flex justify-between text-xs text-slate-500">
+              <span>�� Low stress</span>
+              <span>High stress 😣</span>
+            </div>
+          </div>
+        </section>
 
-        <input
-          type="range"
-          className="form-range"
-          min="1"
-          max="10"
-          value={stress}
-          onChange={(e) =>
-            setStress(
-              Number(e.target.value)
-            )
-          }
-        />
+        {/* Reflection */}
+        <section className="mb-6 rounded-3xl bg-white p-4 shadow-md sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-blue-900">
+              📝 Daily Reflection
+            </h2>
 
-        <p>{stress}/10</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Your words can help you understand your progress.
+            </p>
+          </div>
 
-        {/* Journal */}
-        <h4 className="mt-4">
-          Journal
-        </h4>
+          <div className="space-y-5">
+            <div>
+              <label
+                htmlFor="journal"
+                className="mb-2 block text-sm font-bold text-slate-700"
+              >
+                📖 How was your day?
+              </label>
 
-        <textarea
-          className="form-control"
-          rows={5}
-          placeholder="How was today?"
-          value={journal}
-          onChange={(e) =>
-            setJournal(
-              e.target.value
-            )
-          }
-        />
+              <textarea
+                id="journal"
+                value={journal}
+                onChange={(e) => setJournal(e.target.value)}
+                rows={4}
+                placeholder="Write anything you'd like to remember about today..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
 
-        {/* Challenges */}
-        <h4 className="mt-4">
-          Challenges
-        </h4>
+            <div>
+              <label
+                htmlFor="challenge"
+                className="mb-2 block text-sm font-bold text-slate-700"
+              >
+                🧩 What challenged you today?
+              </label>
 
-        <textarea
-          className="form-control"
-          rows={3}
-          placeholder="What challenged you today?"
-          value={challenge}
-          onChange={(e) =>
-            setChallenge(
-              e.target.value
-            )
-          }
-        />
+              <textarea
+                id="challenge"
+                value={challenge}
+                onChange={(e) => setChallenge(e.target.value)}
+                rows={3}
+                placeholder="What was difficult, and how did you handle it?"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
 
-        {/* Wins */}
-        <h4 className="mt-4">
-          Today's Wins
-        </h4>
+            <div>
+              <label
+                htmlFor="wins"
+                className="mb-2 block text-sm font-bold text-slate-700"
+              >
+                🏆 What was your win today?
+              </label>
 
-        <textarea
-          className="form-control"
-          rows={3}
-          placeholder="What are you proud of today?"
-          value={wins}
-          onChange={(e) =>
-            setWins(
-              e.target.value
-            )
-          }
-        />
+              <textarea
+                id="wins"
+                value={wins}
+                onChange={(e) => setWins(e.target.value)}
+                rows={3}
+                placeholder="Even a small victory counts..."
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+          </div>
+        </section>
 
-        {/* Save Button */}
-        <div className="text-center my-5">
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving
-              ? "Saving Check-in..."
-              : "Save Today's Check-in"}
-          </button>
+        {/* Save */}
+        <div className="rounded-3xl bg-gradient-to-r from-emerald-500 to-green-600 p-5 text-white shadow-lg sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold">
+                Ready to complete your check-in?
+              </h2>
+
+              <p className="mt-1 text-sm text-emerald-50">
+                Your recovery progress and goals will update automatically.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="rounded-2xl bg-white px-6 py-3 font-bold text-emerald-700 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "✅ Save Check-in"}
+            </button>
+          </div>
         </div>
       </div>
     </AppLayout>
