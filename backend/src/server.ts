@@ -1,10 +1,12 @@
 import app from "./app";
 import { env } from "./config/env";
 import prisma from "./config/prisma";
+import { bootstrapSuperAdmin } from "./services/bootstrapSuperAdmin";
 
 const startServer = async () => {
   try {
     await prisma.$connect();
+    await bootstrapSuperAdmin();
 
     console.log("====================================");
     console.log("Recovery+ Backend Started");
