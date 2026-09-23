@@ -5,6 +5,24 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const storedUser = localStorage.getItem(
+    "recovery_plus_user"
+  );
+
+  let isAdmin = false;
+
+  try {
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+
+      isAdmin =
+        user?.role === "ADMIN" ||
+        user?.role === "SUPER_ADMIN";
+    }
+  } catch {
+    isAdmin = false;
+  }
+
   const links = [
     {
       name: "Dashboard",
@@ -31,7 +49,6 @@ function Navbar() {
       path: "/achievements",
       icon: "🏆",
     },
- 
   ];
 
   const handleLogout = () => {
@@ -62,6 +79,19 @@ function Navbar() {
               {link.icon} {link.name}
             </Link>
           ))}
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`rounded-lg px-4 py-2 transition ${
+                location.pathname.startsWith("/admin")
+                  ? "bg-white text-blue-900"
+                  : "hover:bg-blue-800"
+              }`}
+            >
+              ⚙️ Admin
+            </Link>
+          )}
 
           <button
             type="button"

@@ -1,2 +1,260 @@
-import {Link,useNavigate} from "react-router-dom"; import {useState} from "react"; import Button from "../components/button"; import Input from "../components/Input"; import AuthLayout from "../layouts/AuthLayout"; import PasswordInput from "../components/PasswordInput"; import Checkbox from "../components/Checkbox"; import {registerUser} from "../services/authService";
-export default function Register(){const navigate=useNavigate();const[fullName,setFullName]=useState("");const[email,setEmail]=useState("");const[password,setPassword]=useState("");const[confirmPassword,setConfirmPassword]=useState("");const[acceptedTerms,setAcceptedTerms]=useState(false);const[loading,setLoading]=useState(false);const[error,setError]=useState("");const match=password===confirmPassword;const valid=fullName.trim().split(/\s+/).filter(Boolean).length>=2&&email.trim()!==""&&password.length>=8&&match&&acceptedTerms;async function submit(){if(!valid||loading)return;setLoading(true);setError("");const parts=fullName.trim().split(/\s+/);try{await registerUser({firstName:parts[0],lastName:parts.slice(1).join(" "),email:email.trim().toLowerCase(),password});navigate("/login",{replace:true});}catch(e){setError(e instanceof Error?e.message:"Unable to create account");}finally{setLoading(false);}}return <AuthLayout title="Create Account" description="Begin your recovery journey today."><Input label="Full Name" placeholder="John Doe" value={fullName} onChange={setFullName}/><Input label="Email" type="email" placeholder="john@email.com" value={email} onChange={setEmail}/><PasswordInput label="Password" placeholder="Enter your password" value={password} onChange={setPassword}/><PasswordInput label="Confirm Password" placeholder="Confirm your password" value={confirmPassword} onChange={setConfirmPassword}/>{confirmPassword&&<p className={`mb-4 text-sm font-medium ${match?"text-green-600":"text-red-600"}`}>{match?"✓ Passwords match":"Passwords do not match"}</p>}{error&&<p className="mb-4 text-sm font-medium text-red-600">{error}</p>}<Checkbox checked={acceptedTerms} onChange={setAcceptedTerms} label="I agree to the Terms & Conditions"/><Button label={loading?"Creating Account...":"Create Account"} onClick={()=>void submit()} disabled={!valid||loading}/><p className="mt-6 text-center text-gray-600">Already have an account? <Link to="/login" className="font-semibold text-blue-900 hover:underline">Sign In</Link></p></AuthLayout>}
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { API_BASE_URL } from "../services/api";
+import { Link, useNavigate } from "react-router-dom";
+
+type RegistrationState = "form" | "success";
+
+export default function Register() {
+  const navigate = useNavigate();
+  const [state, setState] =
+    useState<RegistrationState>("form");
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  function handleChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    setForm({
+      ...form,
+      [event.target.name]: event.target.value,
+    });
+  }
+
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Registration failed"
+        );
+      }
+
+      setState("success");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendVerification() {
+    try {
+      setError("");
+      setLoading(true);
+
+      const response = await fetch(
+        `${API_BASE_URL}/auth/resend-verification`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: form.email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Unable to resend verification email"
+        );
+      }
+
+      alert(
+        data.message ||
+          "Verification instructions have been resent."
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to resend verification"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (state === "success") {
+    return (
+      <div className="container py-5">
+        <div
+          className="card shadow-sm border-0 mx-auto"
+          style={{ maxWidth: 520 }}
+        >
+          <div className="card-body p-4 text-center">
+            <div className="fs-1 mb-3">📧</div>
+
+            <h2 className="mb-3">
+              Check your email
+            </h2>
+
+            <p className="text-muted">
+              Your Recovery+ account has been created.
+              Please verify your email before continuing.
+            </p>
+
+            {error && (
+              <div className="alert alert-danger">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="btn btn-outline-primary me-2"
+              disabled={loading}
+              onClick={resendVerification}
+            >
+              {loading
+                ? "Sending..."
+                : "Resend verification"}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => navigate("/login")}
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-5">
+      <div
+        className="card shadow-sm border-0 mx-auto"
+        style={{ maxWidth: 520 }}
+      >
+        <div className="card-body p-4">
+          <h2 className="mb-4">Create your account</h2>
+
+          {error && (
+            <div className="alert alert-danger">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">
+                  First name
+                </label>
+
+                <input
+                  className="form-control"
+                  name="firstName"
+                  value={form.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label">
+                  Last name
+                </label>
+
+                <input
+                  className="form-control"
+                  name="lastName"
+                  value={form.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="col-12">
+                <label className="form-label">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  className="form-control"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="col-12">
+                <label className="form-label">
+                  Password
+                </label>
+
+                <input
+                  type="password"
+                  className="form-control"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  minLength={8}
+                  required
+                />
+              </div>
+
+              <div className="col-12">
+                <button
+                  className="btn btn-primary w-100"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Creating account..."
+                    : "Create account"}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <p className="text-center mt-4 mb-0">
+            Already have an account?{" "}
+            <Link to="/login">Login</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
